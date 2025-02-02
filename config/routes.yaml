@@ -1,5 +1,15 @@
 controllers:
     resource:
-        path: ../src/Controller/
-        namespace: App\Controller
+        path: ../src/Controller/Web
+        namespace: App\Controller\Web
     type: attribute
+
+api_controller:
+    resource:
+        path: ../src/Controller/API/V1
+        namespace: App\Controller\API\V1
+    type: attribute
+    prefix: /api/v1
+    name_prefix: api_v1_
+    defaults:
+        _format: json
