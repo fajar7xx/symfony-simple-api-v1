@@ -1,6 +1,13 @@
 {
+    "name": "symfony simplea api v1 - example",
+    "description": "just simple api implementation using symfony 7",
+    "authors": [
+        {
+            "name": "fajar siagian"
+        }
+    ],
     "type": "project",
-    "license": "proprietary",
+    "license": "GPL-3.0-or-later",
     "minimum-stability": "stable",
     "prefer-stable": true,
     "require": {
