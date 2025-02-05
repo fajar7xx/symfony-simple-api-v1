@@ -6,6 +6,7 @@ use App\Entity\Category;
 use App\Repository\CategoryRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Serializer\SerializerInterface;
@@ -14,13 +15,50 @@ use Symfony\Component\Serializer\SerializerInterface;
 final class CategoryController extends AbstractController
 {
     #[Route(name: 'category_index', methods: ['GET'])]
-    public function index(CategoryRepository $categoryRepository, SerializerInterface $serializer): Response
+    public function index(
+        CategoryRepository $categoryRepository,
+        SerializerInterface $serializer,
+        Request $request
+    ): Response
     {
+        $searchQuery = $request->query->get('q', null);
+        $page  = $request->query->getInt('page', 1);
+        $limit = $request->query->getInt('limit', 10);
+        $orderBy = $request->query->get('order_by', 'id');
+        $sortBy = $request->query->get('sort_by', 'asc');
 
-        $categories = $categoryRepository->findAll();
-        $jsonContent = $serializer->serialize($categories, 'json');
+        $categories = $categoryRepository->getAllCategories($request);
 
-        return JsonResponse::fromJsonString($jsonContent);
+        $totalItems = count($categories);
+        $totalPages = (int) ceil($totalItems / $limit);
+
+        $response = [
+          'data' => $categories,
+          'meta' => [
+              'current_page' => $page,
+              'per_page' => $limit,
+              'total_items' => $totalItems,
+              'total_pages' => $totalPages,
+              'order_by' => $orderBy,
+              'sort_by' => $sortBy,
+              'search_query' => $searchQuery,
+          ],
+            'links' => [
+                'current_page' => $page,
+                'first_url' => $this->generateUrl('api_v1_category_index', ['page' => 1, 'limit' => $limit, 'order_by' => $orderBy, 'sort_by' => $sortBy]),
+                'last_url' => $this->generateUrl('api_v1_category_index', ['page' => $totalPages, 'limit' => $limit, 'order_by' => $orderBy, 'sort_by' => $sortBy]),
+                'next_url' => $page < $totalPages ?  $this->generateUrl('api_v1_category_index', ['page' => $page + 1, 'limit' => $limit, 'order_by' => $orderBy, 'sort_by' => $sortBy]) : null,
+                'prev_url' => $page > 1 ? $this->generateUrl('api_v1_category_index', ['page' => $page - 1, 'limit' => $limit, 'order_by' => $orderBy, 'sort_by' => $sortBy]) : null,
+            ]
+        ];
+
+//        $categories = $categoryRepository->findAll();
+        $jsonContent = $serializer->serialize($response, 'json');
+
+        return JsonResponse::fromJsonString(
+            $jsonContent,
+            JsonResponse::HTTP_OK
+        );
     }
 
 //    #[Route('/new', name: 'category_new', methods: ['POST'])]
